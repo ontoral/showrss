@@ -2,3 +2,4 @@ torrents
 venv
 *.py[cod]
 *.swp
+.showrss
