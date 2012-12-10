@@ -12,7 +12,7 @@ class Entry(object):
     filename_template = '{showname}.S{season:02d}E{episode:02d}.torrent'
     def __init__(self, entry):
         m = re.search('(.*) [sS]?([0-9]{1,2})[eExX]([0-9]{1,2}) .*', entry.title)
-        self.id = entry.link.split('/')[-1].split('.')[0]
+        self.hash = entry.link.split('/')[-1].split('.')[0]
         self.timestamp = int(time.mktime(entry.published_parsed))
         self.showname = m.group(1)
         self.season = int(m.group(2))
