@@ -10,4 +10,5 @@ with file('/home/pi/showrss/torrent-done.log', 'a') as f:
     f.write(os.environ.get('TR_TORRENT_HASH', 'TR_TORRENT_HASH')+'\n')
     f.write(os.environ.get('TR_TORRENT_ID', 'TR_TORRENT_ID')+'\n')
     f.write(os.environ.get('TR_TORRENT_NAME', 'TR_TORRENT_NAME')+'\n')
+    f.write('\n')
 
