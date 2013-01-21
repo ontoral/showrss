@@ -7,7 +7,7 @@ import time
 import urllib
 
 SHOWRSS_FEED = 'http://showrss.karmorra.info/rss.php?user_id=94858&hd=0&proper=1'
-TORRENT_PATH = 'torrents/'
+TORRENT_PATH = '/home/pi/torrents/'
 SHOWRSS_TIMESTAMP = '.timestamp'
 
 
@@ -15,12 +15,13 @@ class Entry(object):
     filename_template = '{showname}.S{season:02d}E{episode:02d}.torrent'
 
     def __init__(self, entry):
-        m = re.search('(.*) [sS]?([0-9]{1,2})[eExX]([0-9]{1,2}) .*', entry.title)
+#        print 'entry:', entry
+        m = re.search('(.*) [sS]?([0-9]{1,2})([eExX]([0-9]{1,2}))* .*', entry.title)
         self.hash = entry.link.split('/')[-1].split('.')[0]
         self.timestamp = int(time.mktime(entry.published_parsed))
         self.showname = m.group(1)
         self.season = int(m.group(2))
-        self.episode = int(m.group(3))
+        self.episode = int(m.group(3)[-2:])
         self.filename = self.filename_template.format(**self.__dict__).replace(' ', '.')
         self.url = entry.link
 
@@ -60,4 +61,4 @@ if __name__ == '__main__':
 
     # Record the most recent feed item in a settings file
     with file(filename, 'w') as settings:
-        settings.write(str(timestamp))
+        settings.write(str(timestamp) + '\n')
