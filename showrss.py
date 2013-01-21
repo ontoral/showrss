@@ -7,6 +7,7 @@ import urllib
 
 SHOWRSS_FEED = 'http://showrss.karmorra.info/rss.php?user_id=94858&hd=0&proper=1'
 TORRENT_PATH = 'torrents/'
+SR_TIMESTAMP = '.timestamp'
 
 class Entry(object):
     filename_template = '{showname}.S{season:02d}E{episode:02d}.torrent'
@@ -43,17 +44,18 @@ def main(timestamp=0):
 
 
 if __name__ == '__main__':
-    # Ensure base timestamp (epoch) exists
-    if not os.path.exists('.showrss'):
-        with file('.showrss', 'w') as settings:
-            write(str(0))
+    filename = os.environ.get('SR_TIMESTAMP', SR_TIMESTAMP)
 
-    # Read timestamp for most recently posted feed item
-    with file('.showrss', 'r') as settings:
-        timestamp = int(settings.readline())
+    # Ensure base timestamp (epoch) exists
+    if os.path.exists(filename):
+        # Read timestamp for most recently posted feed item
+        with file(filename, 'r') as settings:
+            timestamp = int(settings.readline())
+    else:
+        timestamp = 0
 
     timestamp = main(timestamp)
 
     # Record the most recent feed item in a settings file
-    with file('.showrss', 'w') as settings:
+    with file(filename, 'w') as settings:
         settings.write(str(timestamp))
