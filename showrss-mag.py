@@ -13,7 +13,7 @@ import feedparser
 SHOWRSS_FEED = 'http://showrss.karmorra.info/rss.php?user_id=94858&hd=0&proper=1&magnets=true'
 TORRENT_PATH = '/home/pi/torrents/'
 SHOWRSS_TIMESTAMP = '.timestamp'
-PRODUCTION = False
+PRODUCTION = True
 
 
 class Entry(object):
