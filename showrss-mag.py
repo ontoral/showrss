@@ -1,24 +1,24 @@
 #!/usr/bin/env python
 
+# Standard library imports
+import argparse
+import datetime
 import os
 import re
-import datetime
-import time
 # from sqlite3 import dbapi2 as sqlite3
-import urllib
 import subprocess
+import time
 
+# Other imports
 import feedparser
 
 SHOWRSS_FEED = 'http://showrss.karmorra.info/rss.php?user_id=94858&hd=0&proper=1&magnets=true'
 TORRENT_PATH = '/home/pi/torrents/'
 SHOWRSS_TIMESTAMP = '.timestamp'
-PRODUCTION = True
+PRODUCTION = False
 
 
 class Entry(object):
-    filename_template = '{showname}.S{season:02d}E{episode:02d}.torrent'
-
     def __init__(self, entry):
 #        print 'entry:', len(entry), entry.keys(), '\n', entry
         m = re.search('(.*) [sS]?([0-9]{1,2})([eExX]([0-9]{1,2}))* .*', entry.title)
@@ -41,12 +41,12 @@ def main(timestamp=0):
             newstamp = max(newstamp, entry.timestamp)
             subprocess.call(['transmission-remote', '-a', entry.url])
             msg = 'Added magnet: S{season:02d}E{episode:02d} - {showname}'
-        else:
+            print msg.format(**entry.__dict__)
+        elif not PRODUCTION:
             msg = 'Skipping: S{season:02d}E{episode:02d} - {showname}'
+            print msg.format(**entry.__dict__)
 
-        print msg.format(**entry.__dict__)
-
-    print datetime.datetime.fromtimestamp(newstamp)
+    print datetime.datetime.fromtimestamp(newstamp), '- done!'
     return newstamp
 
 
@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
     timestamp = main(timestamp)
 
-    # Record the most recent feed item in a settings file
+    # Record the most recent feed timestamp in a file
     if PRODUCTION:
         with file(filename, 'w') as settings:
             settings.write(str(timestamp) + '\n')
