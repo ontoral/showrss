@@ -12,7 +12,7 @@ import time
 # Other imports
 import feedparser
 
-SHOWRSS_FEED = 'http://showrss.karmorra.info/rss.php?user_id=94858&hd=0&proper=1'
+SHOWRSS_FEED = 'http://showrss.karmorra.info/rss.php?user_id=94858&hd=0&proper=1&magnets=true'
 TORRENT_PATH = '/home/pi/torrents/'
 SHOWRSS_TIMESTAMP = '.timestamp'
 PRODUCTION = False
@@ -26,7 +26,8 @@ class Entry(object):
         self.showname = m.group(1)
         self.season = int(m.group(2))
         self.episode = int(m.group(3)[-2:])
-        self.hash = entry.link.split('/')[-1].split('.')[0]
+        m = re.search('.*\?xt=([^&]*).*', entry.link)
+        self.hash = m.group(1)
         self.url = entry.link
 
 
@@ -39,7 +40,7 @@ def main(timestamp=0):
         if entry.timestamp > timestamp:
             newstamp = max(newstamp, entry.timestamp)
             subprocess.call(['transmission-remote', '-a', entry.url])
-            msg = 'Added torrent: S{season:02d}E{episode:02d} - {showname}'
+            msg = 'Added magnet: S{season:02d}E{episode:02d} - {showname}'
             print msg.format(**entry.__dict__)
         elif not PRODUCTION:
             msg = 'Skipping: S{season:02d}E{episode:02d} - {showname}'
