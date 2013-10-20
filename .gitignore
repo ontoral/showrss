@@ -3,3 +3,6 @@ venv
 *.py[cod]
 *.swp
 .timestamp
+*.log
+test*
+
