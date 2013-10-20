@@ -18,7 +18,6 @@ SHOWRSS_FEED = 'http://showrss.karmorra.info/rss.php?user_id=94858&hd=0&proper=1
 SHOWRSS_FEED = os.environ.get('SHOWRSS_FEED', SHOWRSS_FEED)
 TORRENT_PATH = '/home/pi/torrents/'
 TORRENT_PATH = os.environ.get('TORRENT_PATH', TORRENT_PATH)
-SHOWRSS_TIMESTAMP = '.timestamp'
 SHOWRSS_TIMESTAMP = os.environ.get('SHOWRSS_TIMESTAMP', '.timestamp')
 SHOWRSS_DEBUG = os.environ.get('SHOWRSS_DEBUG', True)
 
