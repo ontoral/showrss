@@ -29,8 +29,13 @@ class Entry(object):
         m = re.search('(.*) [sS]?([0-9]{1,2})([eExX]([0-9]{1,2}))* .*', entry.title)
         self.timestamp = int(time.mktime(entry.published_parsed))
         self.showname = m.group(1)
-        self.season = int(m.group(2))
-        self.episode = int(m.group(3)[-2:])
+        self.season = 0
+        self.episode = 0
+        try:
+            self.season = int(m.group(2))
+            self.episode = int(m.group(3)[-2:])
+        except:
+            pass
         m = re.search('.*\?xt=([^&]*).*', entry.link)
         self.hash = m.group(1)
         self.url = entry.link
