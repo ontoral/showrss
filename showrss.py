@@ -7,6 +7,7 @@ import os
 import re
 # from sqlite3 import dbapi2 as sqlite3
 import subprocess
+import tempfile
 import time
 
 # Other imports
@@ -18,7 +19,7 @@ SHOWRSS_FEED = 'http://showrss.karmorra.info/rss.php?user_id=94858&hd=0&proper=1
 SHOWRSS_FEED = os.environ.get('SHOWRSS_FEED', SHOWRSS_FEED)
 TORRENT_PATH = '/home/pi/torrents/'
 TORRENT_PATH = os.environ.get('TORRENT_PATH', TORRENT_PATH)
-SHOWRSS_TIMESTAMP = os.environ.get('SHOWRSS_TIMESTAMP', '.timestamp')
+SHOWRSS_TIMESTAMP = os.environ.get('SHOWRSS_TIMESTAMP', '{$HOME}/.timestamp')
 SHOWRSS_DEBUG = os.environ.get('SHOWRSS_DEBUG', True)
 
 
@@ -60,6 +61,20 @@ def main(timestamp=0):
 
 
 if __name__ == '__main__':
+    description = """Download TV torrents from showRSS feeds.
+
+    Read a torrent RSS feed from http://showrss.karmorra.info, and add all
+    new magnet links to a locally running instance of transmission, via
+    transmission-remote."""
+    parser = argparse.ArgumentParser(description=description)
+
+    try:
+        # trremote = subprocess.call(['transmission-remote', '-si'], stdout=tf)
+        trremote = subprocess.call(['transmission-remote', '-si'])
+        print trremote
+    except OSError, e:
+        print 'Transmission daemon not found.'
+
     filename = SHOWRSS_TIMESTAMP
     if os.path.exists(filename):
         # Read timestamp for most recently posted feed item
