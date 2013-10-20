@@ -13,9 +13,11 @@ import time
 import feedparser
 
 SHOWRSS_FEED = 'http://showrss.karmorra.info/rss.php?user_id=94858&hd=0&proper=1&magnets=true'
+SHOWRSS_FEED = os.environ.get('SHOWRSS_FEED', SHOWRSS_FEED)
 TORRENT_PATH = '/home/pi/torrents/'
+TORRENT_PATH = os.environ.get('TORRENT_PATH', TORRENT_PATH)
 SHOWRSS_TIMESTAMP = '.timestamp'
-PRODUCTION = False
+SHOWRSS_DEBUG = os.environ.get('SHOWRSS_DEBUG', True)
 
 
 class Entry(object):
@@ -42,7 +44,7 @@ def main(timestamp=0):
             subprocess.call(['transmission-remote', '-a', entry.url])
             msg = 'Added magnet: S{season:02d}E{episode:02d} - {showname}'
             print msg.format(**entry.__dict__)
-        elif not PRODUCTION:
+        elif SHOWRSS_DEBUG:
             msg = 'Skipping: S{season:02d}E{episode:02d} - {showname}'
             print msg.format(**entry.__dict__)
 
@@ -62,6 +64,6 @@ if __name__ == '__main__':
     timestamp = main(timestamp)
 
     # Record the most recent feed timestamp in a file
-    if PRODUCTION:
+    if not SHOWRSS_DEBUG:
         with file(filename, 'w') as settings:
             settings.write(str(timestamp) + '\n')
