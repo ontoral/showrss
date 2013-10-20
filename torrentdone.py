@@ -1,14 +1,46 @@
 #!/usr/bin/env python
 
+from datetime import datetime as dt
+from hashlib import sha1
+import re
 import os
 
-with file('/home/pi/showrss/torrent-done.log', 'a') as f:
-    # f.write(os.environ.get('TR_APP_VERSION', 'TR_APP_VERSION')+'\n')
-    # Version 2.52
-    f.write(os.environ.get('TR_TIME_LOCALTIME', 'TR_TIME_LOCALTIME')+'\n')
-    f.write(os.environ.get('TR_TORRENT_DIR', 'TR_TORRENT_DIR')+'\n')
-    f.write(os.environ.get('TR_TORRENT_HASH', 'TR_TORRENT_HASH')+'\n')
-    f.write(os.environ.get('TR_TORRENT_ID', 'TR_TORRENT_ID')+'\n')
-    f.write(os.environ.get('TR_TORRENT_NAME', 'TR_TORRENT_NAME')+'\n')
-    f.write('\n')
+
+def parse_name(torrent_name):
+    regexp = re.compile('(.*)\.([sS]\d+)([eE]\d+)?')
+    parsed = regexp.findall(torrent_name)
+
+    title = ''
+    season = 0
+    episode = 0
+    if parsed:
+        t, s, e = parsed[0]
+        title = t.replace('.', ' ')
+        season = int(s[1:])
+        if e:
+            episode = int(e[1:])
+
+    return title, season, episode
+
+
+def main():
+    t_ver = os.environ.get('TR_APP_VERSION', '2.52')
+    t_time = os.environ.get('TR_TIME_LOCALTIME', dt.now().strftime('%a %b %d %X %Y'))
+    t_dir = os.environ.get('TR_TORRENT_DIR', os.path.expanduser('~'))
+    t_hash = os.environ.get('TR_TORRENT_HASH', sha1(t_time).hexdigest())
+    t_id = os.environ.get('TR_TORRENT_ID', '0')
+    t_name = os.environ.get('TR_TORRENT_NAME', 'Show.Title.S00E00')
+
+    with open(os.path.expanduser('~/showrss/torrent-done.log'), 'a') as f:
+        f.write(t_time+'\n')  # Mon Dec 10 01:05:08 2012
+        f.write(t_dir+'\n')   # /media/pi_server
+        f.write(t_hash+'\n')  # 5ac55cf1b935291f6fc92ad7afd34597498ff2f7
+        f.write(t_id+'\n')    # 16
+                              # Pioneer.One.S01E01.REDUX.Xvid-VODO
+        f.write('{0}, Season: {1}, Episode: {2}\n'.format(*parse_name(t_name)))
+        f.write('\n')
+
+
+if __name__ == '__main__':
+    main()
 
