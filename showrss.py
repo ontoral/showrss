@@ -12,10 +12,15 @@ import time
 # Other imports
 import feedparser
 
+
+# Config
 SHOWRSS_FEED = 'http://showrss.karmorra.info/rss.php?user_id=94858&hd=0&proper=1&magnets=true'
+SHOWRSS_FEED = os.environ.get('SHOWRSS_FEED', SHOWRSS_FEED)
 TORRENT_PATH = '/home/pi/torrents/'
+TORRENT_PATH = os.environ.get('TORRENT_PATH', TORRENT_PATH)
 SHOWRSS_TIMESTAMP = '.timestamp'
-PRODUCTION = False
+SHOWRSS_TIMESTAMP = os.environ.get('SHOWRSS_TIMESTAMP', '.timestamp')
+SHOWRSS_DEBUG = os.environ.get('SHOWRSS_DEBUG', True)
 
 
 class Entry(object):
@@ -32,7 +37,7 @@ class Entry(object):
 
 
 def main(timestamp=0):
-    d = feedparser.parse(os.environ.get('SHOWRSS_FEED', SHOWRSS_FEED))
+    d = feedparser.parse(SHOWRSS_FEED)
 
     newstamp = timestamp
     for ee in d.entries:
@@ -42,7 +47,7 @@ def main(timestamp=0):
             subprocess.call(['transmission-remote', '-a', entry.url])
             msg = 'Added magnet: S{season:02d}E{episode:02d} - {showname}'
             print msg.format(**entry.__dict__)
-        elif not PRODUCTION:
+        elif SHOWRSS_DEBUG:
             msg = 'Skipping: S{season:02d}E{episode:02d} - {showname}'
             print msg.format(**entry.__dict__)
 
@@ -51,7 +56,7 @@ def main(timestamp=0):
 
 
 if __name__ == '__main__':
-    filename = os.environ.get('SHOWRSS_TIMESTAMP', SHOWRSS_TIMESTAMP)
+    filename = SHOWRSS_TIMESTAMP
     if os.path.exists(filename):
         # Read timestamp for most recently posted feed item
         with file(filename, 'r') as settings:
@@ -62,6 +67,7 @@ if __name__ == '__main__':
     timestamp = main(timestamp)
 
     # Record the most recent feed timestamp in a file
-    if PRODUCTION:
+    if not SHOWRSS_DEBUG:
         with file(filename, 'w') as settings:
             settings.write(str(timestamp) + '\n')
+
