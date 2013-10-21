@@ -17,9 +17,7 @@ import feedparser
 # Config
 SHOWRSS_FEED = 'http://showrss.karmorra.info/rss.php?user_id=94858&hd=0&proper=1&magnets=true'
 SHOWRSS_FEED = os.environ.get('SHOWRSS_FEED', SHOWRSS_FEED)
-TORRENT_PATH = '/home/pi/torrents/'
-TORRENT_PATH = os.environ.get('TORRENT_PATH', TORRENT_PATH)
-SHOWRSS_TIMESTAMP = os.environ.get('SHOWRSS_TIMESTAMP', '{$HOME}/.timestamp')
+SHOWRSS_TIMESTAMP = os.environ.get('SHOWRSS_TIMESTAMP', os.path.expanduser('~/.timestamp'))
 SHOWRSS_DEBUG = os.environ.get('SHOWRSS_DEBUG', True)
 
 
@@ -41,7 +39,7 @@ class Entry(object):
         self.url = entry.link
 
 
-def main(timestamp=0):
+def main(timestamp):
     d = feedparser.parse(SHOWRSS_FEED)
 
     newstamp = timestamp
