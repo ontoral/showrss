@@ -7,24 +7,26 @@ import os
 
 
 def parse_name(torrent_name):
-    regexp = re.compile('(.*)\.([sS]\d+)([eE]\d+)?')
-    parsed = regexp.findall(torrent_name)
+    match = re.search('(.*)\.([sS]\d+)([eE]\d+)?', torrent_name)
 
-    title = ''
+    title = torrent_name
     season = 0
     episode = 0
-    if parsed:
-        t, s, e = parsed[0]
+    if match:
+        t, s, e = match.groups()
         title = t.replace('.', ' ')
-        season = int(s[1:])
-        if e:
+        try:
+            season = int(s[1:])
             episode = int(e[1:])
+        except:
+            # Fall back to default values defined above
+            pass
 
     return title, season, episode
 
 
 def main():
-    t_ver = os.environ.get('TR_APP_VERSION', '2.52')
+    t_ver = os.environ.get('TR_APP_VERSION', '2.51')
     t_time = os.environ.get('TR_TIME_LOCALTIME', dt.now().strftime('%a %b %d %X %Y'))
     t_dir = os.environ.get('TR_TORRENT_DIR', os.path.expanduser('~'))
     t_hash = os.environ.get('TR_TORRENT_HASH', sha1(t_time).hexdigest())
