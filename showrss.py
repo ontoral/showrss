@@ -18,8 +18,7 @@ import feedparser
 SHOWRSS_FEED = 'http://showrss.karmorra.info/rss.php?user_id=94858&hd=0&proper=1&magnets=true'
 SHOWRSS_FEED = os.environ.get('SHOWRSS_FEED', SHOWRSS_FEED)
 SHOWRSS_TIMESTAMP = os.environ.get('SHOWRSS_TIMESTAMP', os.path.expanduser('~/.timestamp'))
-SHOWRSS_DEBUG = os.environ.get('SHOWRSS_DEBUG', True)
-
+SHOWRSS_DEBUG = os.environ.get('SHOWRSS_DEBUG', 'False') == 'True'
 
 class Entry(object):
     def __init__(self, entry):
