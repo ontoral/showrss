@@ -50,7 +50,7 @@ def main(timestamp):
     newstamp = timestamp
     for ee in d.entries:
         entry = Entry(ee)
-        print entry
+        #print entry
         if entry.timestamp > timestamp:
             newstamp = max(newstamp, entry.timestamp)
             subprocess.call(['transmission-remote', '-a', entry.url])
