@@ -15,43 +15,64 @@ import feedparser
 
 
 # Config
-SHOWRSS_FEED = 'http://showrss.karmorra.info/rss.php?user_id=94858&hd=0&proper=1&magnets=true'
+SHOWRSS_FEED = 'http://showrss.info/rss.php?user_id=94858&hd=0&proper=1'
 SHOWRSS_FEED = os.environ.get('SHOWRSS_FEED', SHOWRSS_FEED)
 SHOWRSS_TIMESTAMP = os.environ.get('SHOWRSS_TIMESTAMP', os.path.expanduser('~/.timestamp'))
-SHOWRSS_DEBUG = os.environ.get('SHOWRSS_DEBUG', 'False') == 'True'
+SHOWRSS_DEBUG = bool(os.environ.get('SHOWRSS_DEBUG', False))
+
 
 class Entry(object):
     def __init__(self, entry):
-#        print 'entry:', len(entry), entry.keys(), '\n', entry
-        m = re.search('(.*) [sS]?([0-9]{1,2})([eExX]([0-9]{1,2}))* .*', entry.title)
+        #print 'entry:', len(entry), entry.keys(), '\n', entry
+        #print entry.title
+        regexp = '(.*)[ .-][sS]?([0-9]{1,2})[eExX]([0-9]{1,2})*.*'
+        m = re.search(regexp, entry.title)
         self.timestamp = int(time.mktime(entry.published_parsed))
-        self.showname = m.group(1)
+        self.title = m.group(1)
         self.season = 0
         self.episode = 0
         try:
             self.season = int(m.group(2))
-            self.episode = int(m.group(3)[-2:])
+            self.episode = int(m.group(3))
         except:
             pass
         m = re.search('.*\?xt=([^&]*).*', entry.link)
         self.hash = m.group(1)
         self.url = entry.link
 
+    def __repr__(self):
+        return '<Magnet: {0.hash}, {0}>'.format(self)
 
-def main(timestamp):
+    def __str__(self):
+        return '{0.title} S{0.season:02d}E{0.episode:02d}'.format(self)
+
+
+def main(args, timestamp, download_dir):
     d = feedparser.parse(SHOWRSS_FEED)
 
+    print 'ShowRSS Feed Downloader'
     newstamp = timestamp
     for ee in d.entries:
         entry = Entry(ee)
-        if entry.timestamp > timestamp:
+        #print entry
+        download = False
+        if args.interactive:
+            answer = raw_input('Download "{}"? [yNq] '.format(entry)).lower()
+            if answer in ['quit', 'q']:
+                break
+            download = answer in ['yes', 'y']
+        elif entry.timestamp > timestamp:
+            download = True
+
+        if download:
             newstamp = max(newstamp, entry.timestamp)
-            subprocess.call(['transmission-remote', '-a', entry.url])
-            msg = 'Added magnet: S{season:02d}E{episode:02d} - {showname}'
-            print msg.format(**entry.__dict__)
-        elif SHOWRSS_DEBUG:
-            msg = 'Skipping: S{season:02d}E{episode:02d} - {showname}'
-            print msg.format(**entry.__dict__)
+            path = os.path.join(download_dir, 'video', 'tv', entry.title)
+            #print 'Download to: {}'.format(path)
+            result = subprocess.check_output(['transmission-remote',
+                                              '-a', entry.url])
+            print '    Adding {}...: {}'.format(entry, result.split()[-1])
+        else:
+            print '    Skipping: {}'.format(entry)
 
     print datetime.datetime.fromtimestamp(newstamp), '- done!'
     return newstamp
@@ -60,30 +81,33 @@ def main(timestamp):
 if __name__ == '__main__':
     description = """Download TV torrents from showRSS feeds.
 
-    Read a torrent RSS feed from http://showrss.karmorra.info, and add all
+    Read a torrent RSS feed from http://showrss.info, and add all
     new magnet links to a locally running instance of transmission, via
     transmission-remote."""
     parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('-i', '--interactive', action='store_true',
+                        help='prompt for confirmation on all feed items.')
 
     try:
-        # trremote = subprocess.call(['transmission-remote', '-si'], stdout=tf)
-        trremote = subprocess.call(['transmission-remote', '-si'])
-        print trremote
+        session_info = subprocess.check_output(['transmission-remote',
+                                                '-si'])
+        download_dir = re.search('Download directory: ([^\s]*)',
+                                 session_info).group(1)
     except OSError, e:
         print 'Transmission daemon not found.'
+        exit()
 
+    timestamp = 0
     filename = SHOWRSS_TIMESTAMP
     if os.path.exists(filename):
         # Read timestamp for most recently posted feed item
         with file(filename, 'r') as settings:
             timestamp = int(settings.readline())
-    else:
-        timestamp = 0
 
-    timestamp = main(timestamp)
+    timestamp = main(parser.parse_args(), timestamp, download_dir)
 
     # Record the most recent feed timestamp in a file
     if not SHOWRSS_DEBUG:
         with file(filename, 'w') as settings:
-            settings.write(str(timestamp) + '\n')
+            settings.write(str(timestamp))
 
