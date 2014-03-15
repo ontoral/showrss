@@ -56,6 +56,14 @@ def main(args, timestamp, download_dir):
         entry = Entry(ee)
         #print entry
         download = False
+
+        # List feed items and take no action
+        if args.list_only:
+            status = '*' if entry.timestamp > timestamp else ''
+            print '{}{}'.format(status, entry)
+            continue
+
+        # Prompt [y/N] each feed item before download
         if args.interactive:
             answer = raw_input('Download "{}"? [yNq] '.format(entry)).lower()
             if answer in ['quit', 'q']:
@@ -64,15 +72,17 @@ def main(args, timestamp, download_dir):
         elif entry.timestamp > timestamp:
             download = True
 
+        # Download or skip feed items accordingly
         if download:
             newstamp = max(newstamp, entry.timestamp)
             path = os.path.join(download_dir, 'video', 'tv', entry.title)
             #print 'Download to: {}'.format(path)
             result = subprocess.check_output(['transmission-remote',
                                               '-a', entry.url])
-            print '    Adding {}...: {}'.format(entry, result.split()[-1])
+            print '    Adding   {}... {}'.format(entry, result.split()[-1])
         else:
-            print '    Skipping: {}'.format(entry)
+            if args.verbose:
+                print '    Skipping {}'.format(entry)
 
     print datetime.datetime.fromtimestamp(newstamp), '- done!'
     return newstamp
@@ -87,6 +97,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('-i', '--interactive', action='store_true',
                         help='prompt for confirmation on all feed items.')
+    parser.add_argument('-l', '--list', dest='list_only', action='store_true',
+                        help='list available feed items (no action).')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='more output.')
 
     try:
         session_info = subprocess.check_output(['transmission-remote',
