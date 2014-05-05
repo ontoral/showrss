@@ -47,12 +47,23 @@ class Entry(object):
         return '{0.title} S{0.season:02d}E{0.episode:02d}'.format(self)
 
 
-def main(args, timestamp, download_dir):
-    d = feedparser.parse(SHOWRSS_FEED)
+def main(args):
+    # Download and parse the feed
+    feed = args.feed or SHOWRSS_FEED
+    parsed_feed = feedparser.parse(feed)
+
+    # Determine the timestamp of the last successful feed scraping
+    timestamp_filename = SHOWRSS_TIMESTAMP
+    if os.path.exists(timestamp_filename):
+        # Read timestamp for most recently posted feed item
+        with file(timestamp_filename, 'r') as timestamp_file:
+            timestamp = int(timestamp_file.readline())
+    else:
+        timestamp = 0
 
     print 'ShowRSS Feed Downloader'
     newstamp = timestamp
-    for ee in d.entries:
+    for ee in parsed_feed.entries:
         entry = Entry(ee)
         #print entry
         download = False
@@ -75,8 +86,6 @@ def main(args, timestamp, download_dir):
         # Download or skip feed items accordingly
         if download:
             newstamp = max(newstamp, entry.timestamp)
-            path = os.path.join(download_dir, 'video', 'tv', entry.title)
-            #print 'Download to: {}'.format(path)
             result = subprocess.check_output(['transmission-remote',
                                               '-a', entry.url])
             print '    Adding   {}... {}'.format(entry, result.split()[-1])
@@ -85,7 +94,13 @@ def main(args, timestamp, download_dir):
                 print '    Skipping {}'.format(entry)
 
     print datetime.datetime.fromtimestamp(newstamp), '- done!'
-    return newstamp
+
+    # Save the most recent feed timestamp
+    if not SHOWRSS_DEBUG and not args.save_timestamp:
+        with file(timestamp_filename, 'w') as timestamp_file:
+            timestamp_file.write(str(newstamp))
+
+    return 0
 
 
 if __name__ == '__main__':
@@ -95,33 +110,28 @@ if __name__ == '__main__':
     new magnet links to a locally running instance of transmission, via
     transmission-remote."""
     parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('-f', '--feed',
+                        help='manually specify a feed to scrape.')
     parser.add_argument('-i', '--interactive', action='store_true',
                         help='prompt for confirmation on all feed items.')
-    parser.add_argument('-l', '--list', dest='list_only', action='store_true',
+    parser.add_argument('-l', '--list-only', dest='list_only',
+                        action='store_true',
                         help='list available feed items (no action).')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='more output.')
+    parser.add_argument('-s', '--save-timestamp', dest='save_timestamp',
+                        action='store_true', default=True,
+                        help='save the timestamp of the most recent download.')
+    parser.add_argument('-S', '--skip-timestamp', dest='save_timestamp',
+                        action='store_false',
+                        help='do not save the timestamp.')
 
     try:
         session_info = subprocess.check_output(['transmission-remote',
                                                 '-si'])
-        download_dir = re.search('Download directory: ([^\s]*)',
-                                 session_info).group(1)
     except OSError, e:
         print 'Transmission daemon not found.'
         exit()
 
-    timestamp = 0
-    filename = SHOWRSS_TIMESTAMP
-    if os.path.exists(filename):
-        # Read timestamp for most recently posted feed item
-        with file(filename, 'r') as settings:
-            timestamp = int(settings.readline())
-
-    timestamp = main(parser.parse_args(), timestamp, download_dir)
-
-    # Record the most recent feed timestamp in a file
-    if not SHOWRSS_DEBUG:
-        with file(filename, 'w') as settings:
-            settings.write(str(timestamp))
+    main(parser.parse_args())
 
